@@ -6,12 +6,16 @@ def download_kaggle_dataset(dataset, path):
     api.authenticate()
     api.dataset_download_files(dataset, path=path, unzip=True)
 
-dataset_name = 'ashishkumarak/spotify-reviews-playstore-daily-update'
-download_path = 'data/'
+def download():
+    dataset_name = 'ashishkumarak/spotify-reviews-playstore-daily-update'
+    download_path = 'data/'
 
-if not os.path.exists(download_path):
-    os.makedirs(download_path)
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
 
-download_kaggle_dataset(dataset_name, download_path)
+    download_kaggle_dataset(dataset_name, download_path)
 
-print("Pobrane pliki:", os.listdir(download_path))
+    print("Pobrane pliki:", os.listdir(download_path))
+
+if __name__ == "__main__":
+    download()
