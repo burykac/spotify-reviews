@@ -45,10 +45,6 @@ json
   "key": "YOUR_KEY"
 }
 
-Upewnij się, że plik kaggle.json ma odpowiednie uprawnienia:
-
-chmod 600 ~/.kaggle/kaggle.json
-
 Uruchomienie
 Sprawdź instalację pakietów:
 
