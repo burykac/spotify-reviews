@@ -2,7 +2,7 @@ import os
 import string
 import re
 import pandas as pd
-import numpy as np
+import matplotlib.pyplot as plt
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -29,6 +29,16 @@ if os.path.exists(csv_file_path):
     print(df.head())
 else:
     print(f"Plik {csv_file_path} nie istnieje.")
+
+# Wstępna analiza danych
+review_count = df['score'].value_counts()
+order = [1,2,3,4,5]
+review_count = review_count.reindex(order)
+plt.bar(review_count.index, review_count.values)
+plt.show()
+
+avg_score = df['score'].sum()/len(df)
+print(f"Średnia ocena aplikacji: {avg_score}")
 
 # klasa przechowująca dataframe
 class DataLoader:
