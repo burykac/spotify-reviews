@@ -35,16 +35,6 @@ Zainstaluj wymagane pakiety:
 pip install -r requirements
 
 
-Skonfiguruj API Kaggle:
-
-Utwórz plik ~/.kaggle/kaggle.json z danymi uwierzytelniającymi API Kaggle. Plik powinien zawierać klucz API w formacie JSON:
-json
-
-{
-  "username": "YOUR_USERNAME",
-  "key": "YOUR_KEY"
-}
-
 Uruchomienie
 Sprawdź instalację pakietów:
 
