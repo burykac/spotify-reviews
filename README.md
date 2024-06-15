@@ -1,5 +1,7 @@
 Analiza recenzji Spotify z Google Play Store
+
 Opis projektu
+
 Ten projekt analizuje recenzje aplikacji Spotify pobrane z Google Play Store. Główne cele projektu to:
 
 Pobranie i weryfikacja danych z Kaggle.
