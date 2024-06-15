@@ -104,4 +104,3 @@ df['normalized_content'] = df['content'].apply(process_text)
 
 print("Dane po normalizacji ocen")
 print(df[['content', 'normalized_content']].head())
-
