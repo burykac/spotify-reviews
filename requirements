@@ -5,3 +5,8 @@ spacy
 scikit-learn
 textblob
 kaggle
+os
+string
+re
+matplotlib
+scipy
