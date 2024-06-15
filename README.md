@@ -32,7 +32,7 @@ cd <spotify-reviews>
 
 Zainstaluj wymagane pakiety:
 
-pip install -r requirements.txt
+pip install -r requirements
 
 
 Skonfiguruj API Kaggle:
