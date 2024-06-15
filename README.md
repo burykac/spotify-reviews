@@ -26,6 +26,7 @@ Aby uruchomić projekt, wykonaj poniższe kroki:
 Sklonuj repozytorium:
 
 git clone <https://github.com/burykac/spotify-reviews.git>
+
 cd <spotify-reviews>
 
 
