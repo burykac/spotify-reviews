@@ -5,6 +5,5 @@ spacy
 scikit-learn
 textblob
 kaggle
-string
 matplotlib
 scipy
