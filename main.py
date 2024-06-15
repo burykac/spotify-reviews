@@ -4,6 +4,7 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import nltk
+from textblob import TextBlob
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
@@ -12,16 +13,18 @@ from sklearn.preprocessing import MinMaxScaler
 from check_kaggle_API import check_kaggle_api
 from verify_installation import verify
 from download_data import download
+from scipy import sparse
+
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
-# weryfikacja i pobranie danych
+# Weryfikacja i pobranie danych
 verify()
 check_kaggle_api()
 download()
 
-# przygotowanie datasetu do pracy
+# Przygotowanie datasetu do pracy
 csv_file_path = os.path.join('data', 'spotify_reviews.csv')
 
 if os.path.exists(csv_file_path):
@@ -32,21 +35,23 @@ else:
 
 # Wstępna analiza danych
 review_count = df['score'].value_counts()
-order = [1,2,3,4,5]
+order = [1, 2, 3, 4, 5]
 review_count = review_count.reindex(order)
 plt.bar(review_count.index, review_count.values)
 plt.show()
 
-avg_score = df['score'].sum()/len(df)
+avg_score = df['score'].sum() / len(df)
 print(f"Średnia ocena aplikacji: {avg_score}")
 
-# klasa przechowująca dataframe
+
+# Klasa przechowująca DataFrame
 class DataLoader:
     def __init__(self, dataframe):
         self.df = dataframe
 
     def get_data(self):
         return self.df
+
 
 class TextProcessor:
     def __init__(self):
@@ -76,41 +81,90 @@ class TextProcessor:
     def lemmatize_tokens(self, tokens):
         return [self.lemmatizer.lemmatize(word) for word in tokens]
 
-class Vectorizer:
-    def __init__(self):
-        self.vectorizer = TfidfVectorizer()
+    def process_text(self, text):
+        normalized_text = self.normalize_text(text)
+        removed_punctuation = self.remove_punctuation(normalized_text)
+        removed_special = self.remove_special(removed_punctuation)
+        tokens = self.tokenize_text(removed_special)
+        tokens_removed_stopwords = self.remove_stopwords(tokens)
+        if not tokens_removed_stopwords:
+            return ""
+        stemmed_tokens = self.stem_tokens(tokens_removed_stopwords)
+        lemmatized_tokens = self.lemmatize_tokens(stemmed_tokens)
+        return ' '.join(lemmatized_tokens)
 
-    def fit_transform(self, text_data):
-        return self.vectorizer.fit_transform(text_data)
-
-class Scaler:
-    def __init__(self):
-        self.scaler = MinMaxScaler()
-
-    def fit_transform_scaler(self, numeric_data):
-        return self.scaler.fit_transform(numeric_data)
 
 # Czyszczenie danych
 df.drop_duplicates(inplace=True)
 df.dropna(inplace=True)
 
 print("Dane po czyszczeniu")
-print(df.head())
+print(df[['content', 'score']].head())
 
 # Normalizacja
 text_processor = TextProcessor()
-
-def process_text(text):
-    normalized_text = text_processor.normalize_text(text)
-    removed_punctuation = text_processor.remove_punctuation(normalized_text)
-    removed_special = text_processor.remove_special(removed_punctuation)
-    tokens = text_processor.tokenize_text(removed_special)
-    tokens_removed_stopwords = text_processor.remove_stopwords(tokens)
-    stemmed_tokens = text_processor.stem_tokens(tokens_removed_stopwords)
-    lemmatized_tokens = text_processor.lemmatize_tokens(stemmed_tokens)
-    return ' '.join(lemmatized_tokens)
-
-df['normalized_content'] = df['content'].apply(process_text)
+df['normalized_content'] = df['content'].apply(text_processor.process_text)
 
 print("Dane po normalizacji ocen")
-print(df[['content', 'normalized_content']].head())
+df = df[df['normalized_content'].str.strip() != ""]
+
+print(df[['content', 'score', 'normalized_content']].head(10))
+
+if isinstance(df['normalized_content'].iloc[0], str):
+    print("Dane są w odpowiednim formacie do wektoryzacji.")
+else:
+    raise ValueError("Kolumna 'normalized_content' nie zawiera str.")
+
+
+# Klasa do wektoryzacji tekstu
+class Vectorizer:
+    def __init__(self):
+        self.vectorizer = TfidfVectorizer()
+
+    def fit_transform(self, text_data):
+        self.matrix = self.vectorizer.fit_transform(text_data)
+        return self.matrix
+
+    def get_feature_names_out(self):
+        return self.vectorizer.get_feature_names_out()
+
+
+# Wektoryzacja tekstu
+vectorizer = Vectorizer()
+df['lemmatized_content'] = df['normalized_content']
+
+text_for_matrix = df['lemmatized_content'].tolist()
+
+try:
+    matrix = vectorizer.fit_transform(text_for_matrix)
+    feature_names = vectorizer.get_feature_names_out()
+    print("Wektoryzacja zakończona sukcesem.")
+except ValueError as e:
+    print(f"Błąd wektoryzacji: {e}")
+
+# Sprawdzenie macierzy
+if matrix.nnz == 0:
+    print("Macierz zawiera tylko zera. Sprawdź przetwarzanie tekstu.")
+else:
+    print("Macierz zawiera wartości różne od zera.")
+
+sparse.save_npz('data/tfidf_matrix.npz', matrix)
+print("Macierz zapisana do pliku 'data/tfidf_matrix.npz'.")
+
+sample_matrix = matrix[:20].toarray()
+print(sample_matrix)
+
+# Analiza sentymentu
+def analyze_sentiment(text):
+    blob = TextBlob(text)
+    return blob.sentiment.polarity, blob.sentiment.subjectivity
+
+df['polarity'], df['subjectivity'] = zip(*df['content'].apply(analyze_sentiment))
+
+print(df[['content', 'polarity', 'subjectivity']].head())
+
+plt.hist(df['polarity'], bins=20, color='blue', edgecolor='black')
+plt.title('Rozkład polaryzacji sentymentu')
+plt.xlabel('Polaryzacja')
+plt.ylabel('Liczba recenzji')
+plt.show()
